@@ -1,0 +1,44 @@
+### ProjectMaster API Testing Examples
+
+# 1. Login as Admin to get Token
+# Copy the token from the response to use in the subsequent requests
+curl -X POST http://localhost:5000/api/login \
+     -H "Content-Type: application/json" \
+     -d '{"email": "admin@example.com", "password": "admin123"}'
+
+# 2. Get All Projects (Requires Admin Token)
+# Replace YOUR_TOKEN_HERE with the actual token
+curl -X GET http://localhost:5000/api/projects \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+# 3. Create a New Project (Admin Only)
+curl -X POST http://localhost:5000/api/projects \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "name": "New Marketing Campaign",
+           "description": "Q3 Marketing Campaign launch",
+           "status": "Pending",
+           "assigned_users": [2, 3]
+         }'
+
+# 4. Update Project Status (User or Admin)
+curl -X PUT http://localhost:5000/api/projects/1 \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+     -H "Content-Type: application/json" \
+     -d '{"status": "Completed"}'
+
+# 5. Get All Users (Admin)
+curl -X GET http://localhost:5000/api/users \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+# 6. Create a New User (Admin Only)
+curl -X POST http://localhost:5000/api/users \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "name": "Jane Doe",
+           "email": "jane@example.com",
+           "password": "securepassword",
+           "role": "User"
+         }'
