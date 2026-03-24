@@ -96,7 +96,8 @@ function renderCharts(projects) {
                     label: 'Proyectos',
                     data: Object.values(creatorCounts),
                     backgroundColor: '#6c757d',
-                    borderRadius: 4
+                    borderRadius: 4,
+                    maxBarThickness: 60
                 }]
             },
             options: {
