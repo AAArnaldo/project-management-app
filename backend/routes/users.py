@@ -36,8 +36,8 @@ def create_user():
     # Verify max users rule (Up to 4 Users + 1 Admin)
     # The requirement says "Up to 4 Users". Let's say max 5 accounts total.
     total_users = User.query.count()
-    if total_users >= 5:
-        return jsonify({'message': 'User limit reached (Max 5 total accounts)'}), 400
+    if total_users >= 8:
+        return jsonify({'message': 'User limit reached (Max 8 total accounts)'}), 400
 
     role = data.get('role', 'User')
     if role not in ['Admin', 'User']:

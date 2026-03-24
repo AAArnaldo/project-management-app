@@ -107,15 +107,19 @@ function renderTable() {
 
     tbody.innerHTML = filtered.map(p => {
         const displayStatus = statusTranslations[p.status] || p.status;
+        const progress = p.task_progress || 0;
+        const totalTasks = p.total_tasks || 0;
         return `
         <tr>
             <td class="fw-medium">${p.name}</td>
             <td><span class="status-badge status-${p.status.replace(' ', '-')}">${displayStatus}</span></td>
             <td class="text-secondary">${p.creator_name || 'Desconocido'}</td>
             <td>
-                <div class="d-flex align-items-center">
-                    <i class="fa-solid fa-users text-secondary me-2"></i>
-                    ${p.assigned_users ? p.assigned_users.length : 0}
+                <div class="d-flex align-items-center gap-2">
+                    <div class="task-progress-bar flex-grow-1" style="max-width:80px;">
+                        <div class="progress-fill" style="width:${progress}%;"></div>
+                    </div>
+                    <span class="small text-secondary">${progress}%</span>
                 </div>
             </td>
             <td class="text-end">

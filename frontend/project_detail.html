@@ -41,7 +41,19 @@
                                         <span id="detailStatus" class="status-badge"></span>
                                     </div>
                                 </div>
-                                <p class="text-secondary mb-4" id="detailDescription" style="white-space: pre-wrap;"></p>
+                                <p class="text-secondary mb-3" id="detailDescription" style="white-space: pre-wrap;"></p>
+                                
+                                <!-- Task Progress -->
+                                <div class="mb-3" id="progressSection">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="text-secondary small fw-bold">Progreso de Tareas</span>
+                                        <span class="small fw-bold" id="progressLabel">0%</span>
+                                    </div>
+                                    <div class="task-progress-bar">
+                                        <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                                    </div>
+                                    <div class="text-secondary small mt-1" id="progressDetail">0 / 0 tareas completadas</div>
+                                </div>
                                 
                                 <hr class="my-4">
                                 
@@ -70,9 +82,15 @@
                                 <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white" id="projectTabsContent" style="min-height: 250px;">
                                     <!-- Tasks Tab -->
                                     <div class="tab-pane fade show active" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
-                                        <form id="taskForm" class="d-flex gap-2 mb-3">
-                                            <input type="text" id="newTaskTitle" class="form-control" placeholder="Nueva tarea..." required>
-                                            <button type="submit" class="btn btn-primary" title="Agregar tarea"><i class="fa-solid fa-plus"></i></button>
+                                        <form id="taskForm" class="mb-3">
+                                            <div class="d-flex gap-2 mb-2">
+                                                <input type="text" id="newTaskTitle" class="form-control" placeholder="Nueva tarea..." required>
+                                                <button type="submit" class="btn btn-primary" title="Agregar tarea"><i class="fa-solid fa-plus"></i></button>
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <input type="date" id="newTaskDueDate" class="form-control form-control-sm" style="max-width: 200px;">
+                                                <label class="form-label text-secondary small mb-0 d-flex align-items-center" for="newTaskDueDate" style="white-space:nowrap;">Fecha límite (opcional)</label>
+                                            </div>
                                         </form>
                                         <ul class="list-group list-group-flush" id="tasksList">
                                             <li class="list-group-item text-center text-secondary small py-4">Cargando tareas...</li>

@@ -58,29 +58,29 @@ function loadNavbar() {
     if (!navbar) return;
     
     navbar.innerHTML = `
-        <div class="container-fluid px-4">
-            <button type="button" id="sidebarCollapse" class="btn btn-primary d-md-none">
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" id="sidebarCollapse" class="btn btn-outline-secondary d-md-none me-2">
                 <i class="fa-solid fa-bars"></i>
             </button>
-            <div class="d-flex ms-auto align-items-center gap-3">
-                <div class="dropdown">
-                    <button class="btn btn-link text-secondary p-0 position-relative" type="button" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fa-solid fa-bell fs-5"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle d-none" id="notifBadge">
-                            <span class="visually-hidden">Nuevas alertas</span>
-                        </span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notifDropdown" id="notifMenu" style="width: 320px; max-height: 400px; overflow-y: auto;">
-                        <li><div class="dropdown-item text-center text-secondary small py-2">Cargando...</div></li>
-                    </ul>
-                </div>
-                <button class="btn btn-link text-secondary p-0" id="btnDarkMode" title="Alternar Tema">
-                    <i class="fa-solid fa-moon fs-5" id="darkModeIcon"></i>
+        </div>
+        <div class="d-flex ms-auto align-items-center gap-3">
+            <div class="dropdown">
+                <button class="btn btn-link text-secondary p-0 position-relative" type="button" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-bell fs-5"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle d-none" id="notifBadge">
+                        <span class="visually-hidden">Nuevas alertas</span>
+                    </span>
                 </button>
-                <button class="btn btn-outline-danger" id="btnLogout">
-                    <i class="fa-solid fa-right-from-bracket me-2"></i>Cerrar Sesión
-                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notifDropdown" id="notifMenu" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                    <li><div class="dropdown-item text-center text-secondary small py-2">Cargando...</div></li>
+                </ul>
             </div>
+            <button class="btn btn-link text-secondary p-0" id="btnDarkMode" title="Alternar Tema">
+                <i class="fa-solid fa-moon fs-5" id="darkModeIcon"></i>
+            </button>
+            <button class="btn btn-outline-danger" id="btnLogout">
+                <i class="fa-solid fa-right-from-bracket me-1"></i><span class="d-none d-sm-inline">Cerrar Sesión</span>
+            </button>
         </div>
     `;
 
@@ -109,6 +109,30 @@ function loadNavbar() {
             } else {
                 darkModeIcon.classList.replace('fa-sun', 'fa-moon');
             }
+        });
+    }
+
+    // Setup sidebar collapse toggle for mobile
+    const sidebarBtn = document.getElementById('sidebarCollapse');
+    const sidebar = document.getElementById('sidebar');
+    
+    if (sidebarBtn && sidebar) {
+        // Create overlay element
+        let overlay = document.querySelector('.sidebar-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+        }
+        
+        sidebarBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+        
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
         });
     }
 

@@ -182,8 +182,16 @@ def handle_tasks(project_id):
         data = request.get_json()
         if not data or not data.get('title'):
             return jsonify({'message': 'Title is required'}), 400
+        
+        from datetime import datetime
+        due_date = None
+        if data.get('due_date'):
+            try:
+                due_date = datetime.fromisoformat(data['due_date'].replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                due_date = None
             
-        new_task = Task(title=data['title'], project_id=project_id)
+        new_task = Task(title=data['title'], project_id=project_id, due_date=due_date)
         db.session.add(new_task)
         db.session.commit()
         return jsonify(new_task.to_dict()), 201

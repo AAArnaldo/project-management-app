@@ -20,8 +20,16 @@ class Project(db.Model):
         backref=db.backref('projects', lazy=True))
         
     creator = db.relationship('User', foreign_keys=[created_by])
+    
+    tasks = db.relationship('Task', backref='project', lazy='dynamic', cascade='all, delete-orphan')
+    comments = db.relationship('Comment', backref='project', lazy='dynamic', cascade='all, delete-orphan')
 
     def to_dict(self):
+        task_list = self.tasks.all() if self.tasks else []
+        total_tasks = len(task_list)
+        completed_tasks = len([t for t in task_list if t.is_completed])
+        progress = round((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
+        
         return {
             'id': self.id,
             'name': self.name,
@@ -29,5 +37,8 @@ class Project(db.Model):
             'status': self.status,
             'created_by': self.created_by,
             'creator_name': self.creator.name if self.creator else None,
-            'assigned_users': [user.to_dict() for user in self.users]
+            'assigned_users': [user.to_dict() for user in self.users],
+            'task_progress': progress,
+            'total_tasks': total_tasks,
+            'completed_tasks': completed_tasks
         }

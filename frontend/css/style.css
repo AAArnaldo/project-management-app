@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
   --primary: #4f46e5;
@@ -48,9 +48,11 @@ body {
   min-height: 100vh;
   background: var(--sidebar-bg);
   color: var(--sidebar-color);
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   position: fixed;
-  z-index: 100;
+  z-index: 1000;
+  left: 0;
+  top: 0;
 }
 
 #sidebar .sidebar-header {
@@ -98,7 +100,7 @@ body {
   width: calc(100% - 260px);
   min-height: 100vh;
   margin-left: 260px;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 }
 
 .top-navbar {
@@ -145,6 +147,7 @@ body {
   padding: 0.35em 0.65em;
   font-weight: 600;
   border-radius: 4px;
+  font-size: 0.82rem;
 }
 
 .status-Pending {
@@ -172,6 +175,95 @@ table th {
   text-align: center;
   padding: 3rem 1rem;
   color: var(--text-secondary);
+}
+
+/* Progress bar */
+.task-progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  background-color: #e5e7eb;
+  overflow: hidden;
+}
+
+.task-progress-bar .progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  transition: width 0.4s ease;
+}
+
+/* Overdue badge */
+.overdue-badge {
+  background-color: #fee2e2;
+  color: #991b1b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+}
+
+/* Mobile Sidebar Overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+}
+
+.sidebar-overlay.active {
+  display: block;
+}
+
+/* =============================
+   MOBILE RESPONSIVE
+   ============================= */
+@media (max-width: 768px) {
+  #sidebar {
+    left: -280px;
+  }
+
+  #sidebar.active {
+    left: 0;
+  }
+
+  #content {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+
+  .top-navbar {
+    padding: 10px 16px;
+  }
+
+  .top-navbar .btn-outline-danger {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+  }
+
+  #notifMenu {
+    width: 280px !important;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .table th, .table td {
+    font-size: 0.82rem;
+    padding: 0.5rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
 }
 
 /* Dark Mode Overrides */
@@ -249,4 +341,21 @@ table th {
 [data-theme="dark"] .btn-light:hover {
   background-color: #4b5563;
   color: var(--text-primary);
+}
+
+[data-theme="dark"] .task-progress-bar {
+  background-color: #374151;
+}
+
+[data-theme="dark"] .bg-light {
+  background-color: #374151 !important;
+}
+
+[data-theme="dark"] .overdue-badge {
+  background-color: #7f1d1d;
+  color: #fecaca;
+}
+
+[data-theme="dark"] .sidebar-overlay.active {
+  background: rgba(0,0,0,0.7);
 }

@@ -16,10 +16,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isEditing = role === 'Admin';
     if (isEditing) {
         document.getElementById('btnDeleteProject').classList.remove('d-none');
-        document.getElementById('updateStatusForm').style.display = 'block';
-    } else {
-        document.getElementById('updateStatusForm').style.display = 'block';
     }
+    document.getElementById('updateStatusForm').style.display = 'block';
 
     await loadProjectDetails(projectId);
     await Promise.all([loadTasks(projectId), loadComments(projectId)]);
@@ -72,21 +70,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Task Form
+    // Task Form - now includes optional due_date
     const taskForm = document.getElementById('taskForm');
-    if(taskForm) {
+    if (taskForm) {
         taskForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const title = document.getElementById('newTaskTitle').value;
-            await ApiClient.createProjectTask(projectId, { title });
+            const dueDateInput = document.getElementById('newTaskDueDate').value;
+            const payload = { title };
+            if (dueDateInput) {
+                payload.due_date = new Date(dueDateInput).toISOString();
+            }
+            await ApiClient.createProjectTask(projectId, payload);
             document.getElementById('newTaskTitle').value = '';
+            document.getElementById('newTaskDueDate').value = '';
             await loadTasks(projectId);
+            await loadProjectDetails(projectId); // Refresh progress
         });
     }
 
     // Comment Form
     const commentForm = document.getElementById('commentForm');
-    if(commentForm) {
+    if (commentForm) {
         commentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const content = document.getElementById('newComment').value;
@@ -110,8 +115,16 @@ async function loadProjectDetails(id) {
         statusBadge.textContent = displayStatus;
         
         document.getElementById('newStatus').value = project.status;
-        
         document.getElementById('detailCreator').textContent = project.creator_name || 'Desconocido';
+        
+        // Update progress bar
+        const progress = project.task_progress || 0;
+        const total = project.total_tasks || 0;
+        const completed = project.completed_tasks || 0;
+        
+        document.getElementById('progressLabel').textContent = `${progress}%`;
+        document.getElementById('progressFill').style.width = `${progress}%`;
+        document.getElementById('progressDetail').textContent = `${completed} / ${total} tareas completadas`;
         
         const teamList = document.getElementById('detailTeam');
         if (project.assigned_users && project.assigned_users.length > 0) {
@@ -145,17 +158,38 @@ async function loadTasks(id) {
             list.innerHTML = '<li class="list-group-item text-center text-secondary small py-4">No hay tareas aún.</li>';
             return;
         }
+        
+        const now = new Date();
+        
         list.innerHTML = tasks.map(t => {
             const isCompleted = t.is_completed;
+            let dueDateHtml = '';
+            let isOverdue = false;
+            
+            if (t.due_date) {
+                const dueDate = new Date(t.due_date);
+                const formattedDate = dueDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+                isOverdue = !isCompleted && dueDate < now;
+                
+                dueDateHtml = `
+                    <span class="ms-2 small ${isOverdue ? 'overdue-badge' : 'text-secondary'}">
+                        <i class="fa-regular fa-calendar me-1"></i>${formattedDate}${isOverdue ? ' — Vencida' : ''}
+                    </span>
+                `;
+            }
+            
             return `
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div class="form-check m-0">
-                    <input class="form-check-input task-checkbox" type="checkbox" data-id="${t.id}" ${isCompleted ? 'checked' : ''}>
-                    <label class="form-check-label ${isCompleted ? 'text-decoration-line-through text-secondary' : ''}">
-                        ${t.title}
-                    </label>
+            <li class="list-group-item d-flex justify-content-between align-items-center ${isOverdue ? 'border-start border-danger border-3' : ''}">
+                <div class="d-flex align-items-center flex-wrap">
+                    <div class="form-check m-0">
+                        <input class="form-check-input task-checkbox" type="checkbox" data-id="${t.id}" ${isCompleted ? 'checked' : ''}>
+                        <label class="form-check-label ${isCompleted ? 'text-decoration-line-through text-secondary' : ''}">
+                            ${t.title}
+                        </label>
+                    </div>
+                    ${dueDateHtml}
                 </div>
-                <button class="btn btn-link text-danger p-0 btn-delete-task" data-id="${t.id}" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                <button class="btn btn-link text-danger p-0 btn-delete-task ms-2" data-id="${t.id}" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
             </li>
             `;
         }).join('');
@@ -164,13 +198,15 @@ async function loadTasks(id) {
             chk.addEventListener('change', async (e) => {
                 await ApiClient.updateTask(e.target.dataset.id, { is_completed: e.target.checked });
                 await loadTasks(id);
+                await loadProjectDetails(id); // Refresh progress
             });
         });
         document.querySelectorAll('.btn-delete-task').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                if(confirm("¿Eliminar tarea?")) {
+                if (confirm("¿Eliminar tarea?")) {
                     await ApiClient.deleteTask(e.currentTarget.dataset.id);
                     await loadTasks(id);
+                    await loadProjectDetails(id); // Refresh progress
                 }
             });
         });
@@ -192,8 +228,6 @@ async function loadComments(id) {
         
         list.innerHTML = comments.map(c => {
             const isMe = c.user_id === currentUserId;
-            // Provide data-theme override classes safely by using bg-primary for me and bg-light for them. 
-            // The border class behaves well in dark mode.
             return `
             <div class="d-flex flex-column ${isMe ? 'align-items-end' : 'align-items-start'}">
                 <div class="small text-secondary mb-1 px-1">${isMe ? 'Tú' : c.user_name} • ${new Date(c.created_at).toLocaleDateString()}</div>
@@ -208,4 +242,3 @@ async function loadComments(id) {
         list.innerHTML = '<div class="text-danger">Error cargando comentarios</div>';
     }
 }
-
