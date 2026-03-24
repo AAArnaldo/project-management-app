@@ -26,6 +26,10 @@ def create_app():
     
     # Setup Database
     with app.app_context():
+        import models.comment
+        import models.task
+        import models.notification
+        
         db.create_all()
         init_sample_data(app)
         

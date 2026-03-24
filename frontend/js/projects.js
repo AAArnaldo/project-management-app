@@ -1,25 +1,46 @@
+const statusTranslations = {
+    'Pending': 'Pendiente',
+    'In Progress': 'En Progreso',
+    'Completed': 'Completado'
+};
+
+let globalProjects = [];
+
 document.addEventListener('DOMContentLoaded', async () => {
-    Layout.init();
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const isAdmin = user.role === 'Admin';
+    const role = localStorage.getItem('role');
+    const isEditing = role === 'Admin';
     
-    // Show create button if admin
-    if (isAdmin) {
-        document.getElementById('btnCreateProject').style.display = 'inline-block';
-        loadUsersForSelect();
+    // UI elements
+    const btnCreate = document.getElementById('btnCreateProject');
+    if (isEditing) {
+        btnCreate.style.display = 'block';
+        loadUsersForDropdown();
     }
     
-    await loadProjects();
+    await loadTable();
 
+    // Filters and Export listeners
+    const searchInput = document.getElementById('searchProject');
+    const filterStatus = document.getElementById('filterStatus');
+    const btnExport = document.getElementById('btnExportCSV');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', renderTable);
+    }
+    if (filterStatus) {
+        filterStatus.addEventListener('change', renderTable);
+    }
+    if (btnExport) {
+        btnExport.addEventListener('click', exportToCSV);
+    }
+
+    // Form logic
     const form = document.getElementById('projectForm');
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const btn = document.getElementById('btnSaveProject');
-            const errorAlert = document.getElementById('projectError');
-            btn.disabled = true;
-            errorAlert.classList.add('d-none');
+            const errDiv = document.getElementById('projectError');
+            errDiv.classList.add('d-none');
             
             const name = document.getElementById('projectName').value;
             const description = document.getElementById('projectDescription').value;
@@ -30,66 +51,125 @@ document.addEventListener('DOMContentLoaded', async () => {
             const assigned_users = Array.from(selectEl.selectedOptions).map(opt => parseInt(opt.value));
             
             try {
-                await ApiClient.post('/projects', { name, description, status, assigned_users });
+                const btn = document.getElementById('btnSaveProject');
+                const prev = btn.innerHTML;
+                btn.innerHTML = 'Guardando...';
+                btn.disabled = true;
+
+                await ApiClient.createProject({ name, description, status, assigned_users });
                 
-                // Hide modal and refresh table
-                const modal = bootstrap.Modal.getInstance(document.getElementById('projectModal'));
+                // Success: hide modal, reload table
+                const modalEl = document.getElementById('projectModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
                 modal.hide();
                 form.reset();
-                await loadProjects();
-                
-            } catch (error) {
-                errorAlert.textContent = error.message;
-                errorAlert.classList.remove('d-none');
-            } finally {
+                await loadTable();
+
+                btn.innerHTML = prev;
                 btn.disabled = false;
+            } catch (error) {
+                errDiv.textContent = error.message || 'Error al crear el proyecto.';
+                errDiv.classList.remove('d-none');
+                document.getElementById('btnSaveProject').disabled = false;
+                document.getElementById('btnSaveProject').innerHTML = 'Crear Proyecto';
             }
         });
     }
 });
 
-async function loadProjects() {
+async function loadTable() {
+    const tbody = document.getElementById('projectsTable');
     try {
-        const projects = await ApiClient.get('/projects');
-        const tbody = document.getElementById('projectsTable');
-        
-        if (projects.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No projects found.</td></tr>';
-            return;
-        }
-        
-        tbody.innerHTML = projects.map(p => `
-            <tr>
-                <td class="align-middle fw-medium">${p.name}</td>
-                <td class="align-middle">
-                    <span class="status-badge status-${p.status.replace(/\s+/g, '')}">
-                        ${p.status}
-                    </span>
-                </td>
-                <td class="align-middle text-secondary">${p.creator_name || 'Unknown'}</td>
-                <td class="align-middle">
-                    <span class="badge bg-secondary rounded-pill">${p.assigned_users.length}</span>
-                </td>
-                <td class="align-middle text-end">
-                    <a href="project_detail.html?id=${p.id}" class="btn btn-sm btn-light border shadow-sm">
-                        <i class="fa-solid fa-eye text-primary"></i> View
-                    </a>
-                </td>
-            </tr>
-        `).join('');
-    } catch (e) {
-        console.error(e);
-        document.getElementById('projectsTable').innerHTML = 
-            `<tr><td colspan="5" class="text-danger text-center py-4">Error loading data.</td></tr>`;
+        globalProjects = await ApiClient.getProjects();
+        renderTable();
+    } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">Error al cargar proyectos.</td></tr>`;
     }
 }
 
-async function loadUsersForSelect() {
+function renderTable() {
+    const tbody = document.getElementById('projectsTable');
+    if (!tbody || !globalProjects) return;
+
+    const searchTerm = (document.getElementById('searchProject')?.value || '').toLowerCase();
+    const statusTerm = document.getElementById('filterStatus')?.value || 'All';
+
+    const filtered = globalProjects.filter(p => {
+        const matchSearch = p.name.toLowerCase().includes(searchTerm);
+        const matchStatus = statusTerm === 'All' || p.status === statusTerm;
+        return matchSearch && matchStatus;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-secondary">No se encontraron proyectos con los filtros aplicados.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(p => {
+        const displayStatus = statusTranslations[p.status] || p.status;
+        return `
+        <tr>
+            <td class="fw-medium">${p.name}</td>
+            <td><span class="status-badge status-${p.status.replace(' ', '-')}">${displayStatus}</span></td>
+            <td class="text-secondary">${p.creator_name || 'Desconocido'}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <i class="fa-solid fa-users text-secondary me-2"></i>
+                    ${p.assigned_users ? p.assigned_users.length : 0}
+                </div>
+            </td>
+            <td class="text-end">
+                <a href="project_detail.html?id=${p.id}" class="btn btn-sm btn-light border">
+                    <i class="fa-solid fa-eye me-1"></i>Ver
+                </a>
+            </td>
+        </tr>
+    `}).join('');
+}
+
+function exportToCSV() {
+    const searchTerm = (document.getElementById('searchProject')?.value || '').toLowerCase();
+    const statusTerm = document.getElementById('filterStatus')?.value || 'All';
+
+    const filtered = globalProjects.filter(p => {
+        const matchSearch = p.name.toLowerCase().includes(searchTerm);
+        const matchStatus = statusTerm === 'All' || p.status === statusTerm;
+        return matchSearch && matchStatus;
+    });
+
+    if (filtered.length === 0) {
+        alert("No hay datos para exportar.");
+        return;
+    }
+
+    const headers = ["ID", "Nombre", "Descripción", "Estado", "Creador", "Fecha Creación"];
+    const rows = filtered.map(p => [
+        p.id,
+        `"${p.name.replace(/"/g, '""')}"`,
+        `"${(p.description || '').replace(/"/g, '""')}"`,
+        statusTranslations[p.status] || p.status,
+        `"${p.creator_name || ''}"`,
+        p.created_at || ''
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "proyectos.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+
+async function loadUsersForDropdown() {
     try {
-        const users = await ApiClient.get('/users');
+        const users = await ApiClient.getUsers();
         const select = document.getElementById('projectUsers');
         select.innerHTML = users.map(u => `<option value="${u.id}">${u.name} (${u.email})</option>`).join('');
-    } catch (e) {
-        console.error('Failed to load users', e);
+    } catch (error) {
+        document.getElementById('projectUsers').innerHTML = '<option disabled>Error cargando usuarios</option>';
     }
 }
