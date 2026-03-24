@@ -61,10 +61,16 @@ function renderCharts(projects) {
     const creatorCounts = {};
 
     projects.forEach(p => {
-        if(statusCounts[p.status] !== undefined) statusCounts[p.status]++;
+        if (statusCounts[p.status] !== undefined) statusCounts[p.status]++;
         const creator = p.creator_name || 'Desconocido';
         creatorCounts[creator] = (creatorCounts[creator] || 0) + 1;
     });
+
+    // Detect dark mode
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#cbd5e1' : '#374151';
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+    const cardBg = isDark ? '#1e293b' : '#ffffff';
 
     const statusCtx = document.getElementById('statusChart');
     if (statusCtx) {
@@ -74,14 +80,27 @@ function renderCharts(projects) {
                 labels: ['Pendiente', 'En Progreso', 'Completado'],
                 datasets: [{
                     data: [statusCounts['Pending'], statusCounts['In Progress'], statusCounts['Completed']],
-                    backgroundColor: ['#ffc107', '#0d6efd', '#198754'],
-                    borderWidth: 0
+                    backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'],
+                    hoverBackgroundColor: ['#d97706', '#2563eb', '#059669'],
+                    borderColor: cardBg,
+                    borderWidth: 3
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: textColor,
+                            padding: 16,
+                            font: { size: 13 }
+                        }
+                    }
+                },
+                layout: { padding: 8 }
             }
         });
     }
@@ -95,16 +114,28 @@ function renderCharts(projects) {
                 datasets: [{
                     label: 'Proyectos',
                     data: Object.values(creatorCounts),
-                    backgroundColor: '#6c757d',
-                    borderRadius: 4,
-                    maxBarThickness: 60
+                    backgroundColor: isDark ? '#6366f1' : '#3b82f6',
+                    hoverBackgroundColor: isDark ? '#818cf8' : '#2563eb',
+                    borderRadius: 6,
+                    maxBarThickness: 70
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                scales: {
+                    x: {
+                        ticks: { color: textColor, font: { size: 12 } },
+                        grid: { color: gridColor }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, color: textColor, font: { size: 12 } },
+                        grid: { color: gridColor }
+                    }
+                },
+                layout: { padding: { top: 8, bottom: 8 } }
             }
         });
     }
